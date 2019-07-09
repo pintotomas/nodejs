@@ -1,0 +1,1 @@
+Puede ser ventajoso utilizar prototipos a diferencia de la primer version ya que en la primer forma cada vez que instanciamos un Shape se crean nuevos objetos funciones, en cambio en la version 2, esto sucede una sola vez
