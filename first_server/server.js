@@ -1,3 +1,8 @@
+/* to do:
+clean code
+only support requests album.js and /album/name.js
+*/
+
 var http = require("http")
 var fs = require('fs')
 
@@ -5,7 +10,12 @@ var fs = require('fs')
 function load_album_list(callback){
 	fs.readdir("albums", (err, files) => {
 		if (err){
-			callback(err);
+			if(err.code = "ENOENT"){
+        callback(make_error("no_such_album", "That album does not exist"));
+      }
+      else{
+        callback(make_error("cant_load_photos", "The server is broken"))
+      }
 		}
 		else{
 			var only_dirs = [];
@@ -40,18 +50,23 @@ function load_album_list(callback){
 
 function handle_incoming_request(req, res) {
 	console.log("INCOMING REQUEST: "+req.method+", URL: "+req.url)
-
-  load_album_list((err, album_list) => {
-    if(err){
-      res.writeHead(500, {'Content-Type' : 'application/json'});
-      res.end(JSON.stringify({code: "cant_load_albums", message: err.message}))
-    }
-    else{
-      var output = {error: null, data: {albums: album_list}};
-      res.writeHead(500, {'Content-Type' : 'application/json'});
-      res.end(JSON.stringify(output) + "\n")
-    }
-  })
+  if (req.url == '/albums'){
+    load_album_list((err, album_list) => {
+      if(err){
+        res.writeHead(500, {'Content-Type' : 'application/json'});
+        res.end(JSON.stringify({code: "cant_load_albums", message: err.message}))
+      }
+      else{
+        var output = {error: null, data: {albums: album_list}};
+        res.writeHead(200, {'Content-Type' : 'application/json'});
+        res.end(JSON.stringify(output) + "\n")
+      }
+    })
+  }
+  else{
+    res.writeHead(500, {'Content-Type' : 'application/json'});
+    res.end(JSON.stringify({code: "unknown_url", message: 'URL does not exist'}))
+  }
 }
 
 var s = http.createServer(handle_incoming_request)
