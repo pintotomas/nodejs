@@ -53,20 +53,27 @@ function handle_incoming_request(req, res) {
   if (req.url == '/albums'){
     load_album_list((err, album_list) => {
       if(err){
-        res.writeHead(500, {'Content-Type' : 'application/json'});
-        res.end(JSON.stringify({code: "cant_load_albums", message: err.message}))
+        respond_failure(res, 'cant_load_albums', err.message)
       }
       else{
         var output = {error: null, data: {albums: album_list}};
-        res.writeHead(200, {'Content-Type' : 'application/json'});
-        res.end(JSON.stringify(output) + "\n")
+        respond_success(res, 'albums_found', output)
       }
     })
   }
   else{
-    res.writeHead(500, {'Content-Type' : 'application/json'});
-    res.end(JSON.stringify({code: "unknown_url", message: 'URL does not exist'}))
+    respond_failure(res, 'unknown_url', 'URL does not exist')
   }
+}
+
+function respond_success(res, code, message){
+  res.writeHead(200, {'Content-Type' : 'application/json'});
+  res.end(JSON.stringify({code: code, message: message}))
+}
+
+function respond_failure(res, code, message){
+  res.writeHead(500, {'Content-Type' : 'application/json'});
+  res.end(JSON.stringify({code: code, message: message}))
 }
 
 var s = http.createServer(handle_incoming_request)
