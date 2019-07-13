@@ -51,21 +51,24 @@ function load_album_list(callback){
 function handle_incoming_request(req, res) {
 	console.log("INCOMING REQUEST: "+req.method+", URL: "+req.url)
   if (req.url == '/albums'){
-    load_album_list((err, album_list) => {
-      if(err){
-        respond_failure(res, 'cant_load_albums', err.message)
-      }
-      else{
-        var output = {error: null, data: {albums: album_list}};
-        respond_success(res, 'albums_found', output)
-      }
-    })
+    handle_get_albums_request(res)
   }
   else{
     respond_failure(res, 'unknown_url', 'URL does not exist')
   }
 }
 
+function handle_get_albums_request(res){
+  load_album_list((err, album_list) => {
+        if(err){
+          respond_failure(res, 'cant_load_albums', err.message)
+        }
+        else{
+          var output = {error: null, data: {albums: album_list}};
+          respond_success(res, 'albums_found', output)
+        }
+      })
+}
 function respond_success(res, code, message){
   res.writeHead(200, {'Content-Type' : 'application/json'});
   res.end(JSON.stringify({code: code, message: message}))
