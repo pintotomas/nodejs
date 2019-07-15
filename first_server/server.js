@@ -9,10 +9,16 @@ var url = require('url');
 //callback receives (error, albums_list)
 
 //type can be files or folders
-function get_from_file_system(directory, type,folder, callback){
+function get_from_file_system(directory, type,folder, callback, start, final){
+  start = start || 0 
+  final = final || folder.length
+  if (start >= final ||  final > folder.length || 0 > start ){
+    callback(make_error("EOF", "End of file/folder"), null)
+    return;
+  }
   var matches = [];
   var iterator = (index) => {
-    if (index == folder.length){
+    if (index == final){
       callback(null, matches);
     }
     else{
@@ -27,7 +33,7 @@ function get_from_file_system(directory, type,folder, callback){
       })
     }
   }
-  iterator(0);
+  iterator(start);
 }
 
 function load_album_list(callback){
@@ -42,6 +48,9 @@ function load_album_list(callback){
 		}
 		else{
       get_from_file_system('albums', 'folder', folder, (err, list_of_matches)=>{
+        if (err){
+          callback(err, null)
+        }
         callback(null, list_of_matches)
       })
 		}
@@ -61,10 +70,11 @@ function load_photo_list(album_name, query, callback){
     }
     else{
       get_from_file_system('albums/'+album_name, 'files', folder, (err, list_of_matches)=>{
-
-        var output = list_of_matches.slice(parseInt(query.page_number) - 1, parseInt(query.page_size) + parseInt(query.page_number) - 1)
-        callback(null, output)
-      })
+        if (err){
+          callback(err, null)
+        }
+        callback(null, list_of_matches)
+      }, parseInt(query.page_number) - 1, parseInt(query.page_size) + parseInt(query.page_number) - 1)
     }
   })
 }
