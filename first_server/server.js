@@ -5,7 +5,7 @@ only support requests album.js and /album/name.js
 
 var http = require("http")
 var fs = require('fs')
-
+var url = require('url'); 
 //callback receives (error, albums_list)
 
 //type can be files or folders
@@ -49,7 +49,7 @@ function load_album_list(callback){
 }
 
 //calback receies (error, photo_list)
-function load_photo_list(album_name, callback){
+function load_photo_list(album_name, query, callback){
   fs.readdir('albums/'+album_name, (err, folder) => {
     if (err){
       if(err.code = "ENOENT"){
@@ -61,7 +61,9 @@ function load_photo_list(album_name, callback){
     }
     else{
       get_from_file_system('albums/'+album_name, 'files', folder, (err, list_of_matches)=>{
-        callback(null, list_of_matches)
+
+        var output = list_of_matches.slice(parseInt(query.page_number) - 1, parseInt(query.page_size) + parseInt(query.page_number) - 1)
+        callback(null, output)
       })
     }
   })
@@ -82,8 +84,10 @@ function handle_incoming_request(req, res) {
 }
 
 function handle_get_photos_request(res, req){
-    var album = req.url.split('/')[2]
-    load_photo_list(album, (err, photo_list) => {
+    
+    var parsed_url = url.parse(req.url, true);
+    var album = parsed_url.pathname.split('/')[2]
+    load_photo_list(album, parsed_url.query, (err, photo_list) => {
         if(err){
           send_failure(res, make_error('cant_load_photos', err.message))
         }
