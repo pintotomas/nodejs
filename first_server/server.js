@@ -82,7 +82,11 @@ function load_photo_list(album_name, query, callback){
 function handle_incoming_request(req, res) {
 	console.log("INCOMING REQUEST: "+req.method+", URL: "+req.url)
 
-  if (req.url == '/albums'){
+  if (req.method == "POST" && req.url == "/rename"){
+    handle_rename_file_request(req, res)
+
+  }
+  else if (req.url == '/albums'){
     handle_get_albums_request(res, req)
   }
   else if(req.url.split('/').length == 3 && req.url.split('/')[1] === 'albums'){
@@ -91,6 +95,27 @@ function handle_incoming_request(req, res) {
   else{
     send_failure(res, make_error('unknown_url', 'URL does not exist'))
   }
+}
+
+function handle_rename_file_request(req, res){
+    let json = '';
+    req.on('data', chunk => {
+        json += chunk.toString(); // convert Buffer to string
+    });
+    req.on('end', () => {
+        obj = JSON.parse(json)
+        console.log(obj)
+        if (!("album_name" in obj) || !("old_photo_name" in obj) || !("new_photo_name" in obj)){
+      send_failure(res, make_error("invalid_parameters", "Invalid post request params for rename"))
+    }
+        else {
+          res.end('ok')
+        }
+    });
+    
+    //var obj = JSON.parse(json)
+    //console.log(obj)
+
 }
 
 function handle_get_photos_request(res, req){
