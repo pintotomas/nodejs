@@ -59,7 +59,7 @@ function load_album_list(callback){
 
 //calback receies (error, photo_list)
 function load_photo_list(album_name, query, callback){
-  fs.readdir('albums/'+album_name, (err, folder) => {
+  fs.rename('albums/'+album_name, (err, folder) => {
     if (err){
       if(err.code = "ENOENT"){
         callback(make_error("no_such_album", "That album does not exist"));
@@ -78,7 +78,17 @@ function load_photo_list(album_name, query, callback){
     }
   })
 }
-
+//callback receives error
+function rename_file(path, old_name, new_name, callback){
+  fs.rename(path+'/'+old_name, path+'/'+new_name, (err, folder) => {
+    if ( err ) {
+      callback(make_error("cant_rename", err.message))
+    }
+    else{
+      callback(null)
+    }
+  } )
+}
 function handle_incoming_request(req, res) {
 	console.log("INCOMING REQUEST: "+req.method+", URL: "+req.url)
 
@@ -97,6 +107,7 @@ function handle_incoming_request(req, res) {
   }
 }
 
+
 function handle_rename_file_request(req, res){
     let json = '';
     req.on('data', chunk => {
@@ -104,12 +115,22 @@ function handle_rename_file_request(req, res){
     });
     req.on('end', () => {
         obj = JSON.parse(json)
-        console.log(obj)
         if (!("album_name" in obj) || !("old_photo_name" in obj) || !("new_photo_name" in obj)){
-      send_failure(res, make_error("invalid_parameters", "Invalid post request params for rename"))
+          send_failure(res, make_error("invalid_parameters", "Invalid post request params for rename"))
     }
         else {
-          res.end('ok')
+          album_name = obj["album_name"]
+          old_photo_name = obj["old_photo_name"]
+          new_photo_name = obj["new_photo_name"]
+          rename_file('albums/'+album_name, old_photo_name, new_photo_name, (err) =>
+          {
+            if (err){
+              send_failure(res, make_error('cant_rename', err.message));
+            }
+            else{
+              send_success(res, {error:null, "rename":"ok"})
+            }
+          })
         }
     });
     
