@@ -6,6 +6,7 @@ only support requests album.js and /album/name.js
 var http = require("http")
 var fs = require('fs')
 var url = require('url'); 
+var async = require('async');
 //callback receives (error, albums_list)
 
 //type can be files or folders
@@ -16,24 +17,28 @@ function get_from_file_system(directory, type,folder, callback, start, final){
     callback(make_error("EOF", "End of file/folder"), null)
     return;
   }
-  var matches = [];
-  var iterator = (index) => {
-    if (index == final){
-      callback(null, matches);
-    }
-    else{
-      fs.stat(directory + '/' + folder[index], (err, stats)=>{
+  var matches = []
+  async.forEachSeries(folder, //array a iterar
+
+
+  	(element, cb) => { //funcion a aplicar a cada elemento
+  	  fs.stat(directory + '/' + element, (err, stats)=>{
         if (type == 'folder' && stats.isDirectory()){
-          matches.push(folder[index]);
+          matches.push(element);
         }
         else if (type == 'files' && stats.isFile()){
-          matches.push(folder[index])
+          matches.push(element)
         }
-        iterator(index + 1)
+        cb(null);
       })
-    }
-  }
-  iterator(start);
+
+  	}
+
+  	,
+  	function(err){ //funcion a llamar luego de iterar sobre todos los elementos (o catch error)
+  		callback(null, matches)
+  	})
+
 }
 
 function load_album_list(callback){
