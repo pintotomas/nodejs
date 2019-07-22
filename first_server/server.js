@@ -59,7 +59,7 @@ function load_album_list(callback){
 
 //calback receies (error, photo_list)
 function load_photo_list(album_name, query, callback){
-  fs.rename('albums/'+album_name, (err, folder) => {
+  fs.readdir('albums/'+album_name, (err, folder) => {
     if (err){
       if(err.code = "ENOENT"){
         callback(make_error("no_such_album", "That album does not exist"));
